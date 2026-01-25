@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -16,19 +16,22 @@
         .btn-raid { background: #1da1f2; color: white; }
         .btn-raid:disabled { background: #444; cursor: not-allowed; }
         #leaderboard { margin-top: 30px; text-align: left; background: #222; padding: 15px; border-radius: 12px; }
-        .entry { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #333; }
+        .entry { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
         .entry:last-child { border-bottom: none; }
-        .gold { color: #ffd700; font-weight: bold; }
+        .pimp-info { display: flex; flex-direction: column; }
+        .wallet-sub { font-size: 0.7em; color: #777; font-family: monospace; }
+        .gold { color: #ffd700; font-weight: bold; font-size: 1.1em; }
         .raid-box { border-top: 1px solid #333; margin-top: 25px; padding-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>PIMP PONG 🏓
+    <h1>PIMP PONG ⭐</h1>
     <p class="subtitle">Join the movement & collect Gold Eggs!</p>
 
     <input type="text" id="twitterHandle" placeholder="Your X Name (e.g. @PimpPong)">
+    <input type="text" id="walletAddress" placeholder="Your Wallet Address (SOL/ETH)">
     <button class="btn-reg" onclick="registerUser()">JOIN LEADERBOARD</button>
 
     <div class="raid-box">
@@ -51,6 +54,12 @@
     
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Helper to shorten wallet address
+    function shortenAddress(address) {
+        if (!address) return "No Wallet";
+        return address.slice(0, 4) + "..." + address.slice(-4);
+    }
+
     // Fetch Leaderboard
     async function fetchLeaderboard() {
         const { data, error } = await supabaseClient
@@ -59,7 +68,7 @@
             .order('points', { ascending: false });
 
         if (error) {
-            document.getElementById('list').innerHTML = "<small style='color:red'>Error: Please run SQL Policies in Supabase!</small>";
+            document.getElementById('list').innerHTML = "<small style='color:red'>Error: Update SQL database columns!</small>";
             return;
         }
 
@@ -70,23 +79,32 @@
 
         document.getElementById('list').innerHTML = data.map((user, index) => `
             <div class="entry">
-                <span>${index + 1}. ${user.twitter_name}</span>
+                <div class="pimp-info">
+                    <span>${index + 1}. ${user.twitter_name}</span>
+                    <span class="wallet-sub">${shortenAddress(user.wallet_address)}</span>
+                </div>
                 <span class="gold">${user.points} 🥚</span>
             </div>
         `).join('');
     }
 
-    // Register User
+    // Register User with Wallet
     async function registerUser() {
         const handle = document.getElementById('twitterHandle').value.trim();
-        if (!handle) return alert("Please enter your name!");
+        const wallet = document.getElementById('walletAddress').value.trim();
+
+        if (!handle || !wallet) return alert("Please enter both X Name and Wallet Address!");
         
         const { error } = await supabaseClient
             .from('gold_eggs_leaderboard')
-            .insert([{ twitter_name: handle, points: 0 }]);
+            .insert([{ 
+                twitter_name: handle, 
+                wallet_address: wallet,
+                points: 0 
+            }]);
 
         if (error) {
-            alert("Already on the leaderboard or error occurred.");
+            alert("Already registered or database error.");
         } else {
             alert("Welcome to the family!");
             fetchLeaderboard();
@@ -99,7 +117,7 @@
         const tweetLink = document.getElementById('tweetLink').value.trim();
         const btn = document.getElementById('raidBtn');
 
-        if (!twitterName || !tweetLink) return alert("Name and Link required!");
+        if (!twitterName || !tweetLink) return alert("Enter Name and Tweet Link!");
         
         btn.innerText = "Checking...";
         btn.disabled = true;
@@ -127,8 +145,7 @@
         }
     }
 
-    // Initial load
     document.addEventListener('DOMContentLoaded', fetchLeaderboard);
 </script>
 </body>
-</html>    
+</html>
