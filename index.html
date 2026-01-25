@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,62 +7,101 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Arial', sans-serif; background-color: #0b0b0b; color: white; text-align: center; padding: 20px; }
-        .container { max-width: 500px; margin: auto; background: #1a1a1a; padding: 25px; border-radius: 20px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); border: 1px solid #333; }
-        h1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
-        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; }
-        button { width: 95%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-reg { background: #ffd700; color: black; margin-bottom: 20px; }
+        .container { max-width: 500px; margin: auto; background: #1a1a1a; padding: 25px; border-radius: 20px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); border: 1px solid #333; }
+        h1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); margin-bottom: 5px; }
+        .subtitle { color: #aaa; font-size: 0.9em; margin-bottom: 25px; }
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; outline: none; }
+        button { width: 95%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 5px; }
+        .btn-reg { background: #ffd700; color: black; }
         .btn-raid { background: #1da1f2; color: white; }
-        .btn-raid:disabled { background: #555; cursor: not-allowed; }
-        #leaderboard { margin-top: 30px; text-align: left; }
-        .entry { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
+        .btn-raid:disabled { background: #444; cursor: not-allowed; }
+        #leaderboard { margin-top: 30px; text-align: left; background: #222; padding: 15px; border-radius: 12px; }
+        .entry { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #333; }
+        .entry:last-child { border-bottom: none; }
         .gold { color: #ffd700; font-weight: bold; }
-        .raid-box { border-top: 2px solid #333; margin-top: 20px; padding-top: 20px; }
+        .raid-box { border-top: 1px solid #333; margin-top: 25px; padding-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>PIMP PONG 🏓</h1>
-    <p>Join the movement & collect Gold Eggs!</p>
+    <h1>PIMP PONG ⭐</h1>
+    <p class="subtitle">Join the movement & collect Gold Eggs!</p>
 
-    <input type="text" id="twitterHandle" placeholder="Your X Username (e.g. @PimpPong)">
+    <input type="text" id="twitterHandle" placeholder="Your X Name (e.g. @PimpPong)">
     <button class="btn-reg" onclick="registerUser()">JOIN LEADERBOARD</button>
 
     <div class="raid-box">
-        <h3 style="color: #ffd700;">🥚 LIVE RAID</h3>
-        <p style="font-size: 0.8em; color: #aaa;">Paste your Retweet-Link here to claim an Egg:</p>
+        <h3 style="color: #ffd700; margin-bottom: 5px;">🥚 LIVE RAID</h3>
+        <p style="font-size: 0.75em; color: #888; margin-bottom: 10px;">Paste your Tweet/Retweet link to claim an egg:</p>
         <input type="text" id="tweetLink" placeholder="https://x.com/.../status/...">
         <button class="btn-raid" id="raidBtn" onclick="submitRaid()">VERIFY & CLAIM EGG</button>
     </div>
 
     <div id="leaderboard">
-        <h3>Leaderboard</h3>
-        <div id="list">Lade Pimps...</div>
+        <h3 style="margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">Leaderboard</h3>
+        <div id="list">Loading Pimps...</div>
     </div>
 </div>
 
 <script>
-    // DEINE EINGEFÜGTEN SUPABASE DATEN
-    const SUPABASE_URL = "https://advzccqwmbukvwdpnoef.supabase.co"; oU9n
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA4NDkzMzIzN30.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ";
+    // CONFIGURATION
+    const SUPABASE_URL = "https://advzccqwmbukvwdpnoef.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA1MzM5ODYyNn0.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ"; 
+    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function registerUser() {
-        const handle = document.getElementById('twitterHandle').value.trim();
-        if (!handle) return alert("Enter X Name!");
-        const { error } = await supabaseClient.from('gold_eggs_leaderboard').insert([{ twitter_name: handle, points: 0 }]);
-        if (error) alert("You are already on the leaderboard!");
-        else { alert("Welcome to the family!"); fetchLeaderboard(); }
+    // Fetch Leaderboard
+    async function fetchLeaderboard() {
+        const { data, error } = await supabaseClient
+            .from('gold_eggs_leaderboard')
+            .select('*')
+            .order('points', { ascending: false });
+
+        if (error) {
+            document.getElementById('list').innerHTML = "<small style='color:red'>Error: Please run SQL Policies in Supabase!</small>";
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            document.getElementById('list').innerHTML = "<div style='text-align:center; padding: 10px; color: #666;'>No Pimps registered yet.</div>";
+            return;
+        }
+
+        document.getElementById('list').innerHTML = data.map((user, index) => `
+            <div class="entry">
+                <span>${index + 1}. ${user.twitter_name}</span>
+                <span class="gold">${user.points} 🥚</span>
+            </div>
+        `).join('');
     }
 
+    // Register User
+    async function registerUser() {
+        const handle = document.getElementById('twitterHandle').value.trim();
+        if (!handle) return alert("Please enter your name!");
+        
+        const { error } = await supabaseClient
+            .from('gold_eggs_leaderboard')
+            .insert([{ twitter_name: handle, points: 0 }]);
+
+        if (error) {
+            alert("Already on the leaderboard or error occurred.");
+        } else {
+            alert("Welcome to the family!");
+            fetchLeaderboard();
+        }
+    }
+
+    // Submit Raid
     async function submitRaid() {
         const twitterName = document.getElementById('twitterHandle').value.trim();
         const tweetLink = document.getElementById('tweetLink').value.trim();
         const btn = document.getElementById('raidBtn');
-        if (!twitterName || !tweetLink) return alert("Enter X Name AND Tweet Link!");
+
+        if (!twitterName || !tweetLink) return alert("Name and Link required!");
         
-        btn.innerText = "Checking Vibe...";
+        btn.innerText = "Checking...";
         btn.disabled = true;
 
         try {
@@ -72,26 +111,24 @@
                 body: JSON.stringify({ twitterName, tweetLink })
             });
             const result = await response.json();
+            
             if (result.success) {
-                alert("✅ Vibe Check passed! Gold Egg added.");
+                alert("✅ Gold Egg claimed!");
                 document.getElementById('tweetLink').value = "";
                 fetchLeaderboard();
-            } else { alert("❌ " + result.error); }
-        } catch (err) { alert("System Error."); }
-        finally { btn.innerText = "VERIFY & CLAIM EGG"; btn.disabled = false; }
+            } else {
+                alert("❌ " + (result.error || "Error"));
+            }
+        } catch (err) {
+            alert("Connection failed.");
+        } finally {
+            btn.innerText = "VERIFY & CLAIM EGG";
+            btn.disabled = false;
+        }
     }
 
-    async function fetchLeaderboard() {
-        const { data, error } = await supabaseClient.from('gold_eggs_leaderboard').select('*').order('points', { ascending: false });
-        if (error) return;
-        document.getElementById('list').innerHTML = data.map((user, index) => `
-            <div class="entry">
-                <span>${index + 1}. ${user.twitter_name}</span>
-                <span class="gold">${user.points} 🥚</span>
-            </div>
-        `).join('');
-    }
-    fetchLeaderboard();
+    // Initial load
+    document.addEventListener('DOMContentLoaded', fetchLeaderboard);
 </script>
 </body>
-</html> 
+</html>
