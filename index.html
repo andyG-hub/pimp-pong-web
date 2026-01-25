@@ -7,53 +7,70 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #0d0d0d; color: #fff; font-family: 'Courier New', Courier, monospace; text-align: center; margin: 0; padding: 20px; }
-        .container { max-width: 500px; margin: auto; border: 2px solid #ffd700; padding: 30px; border-radius: 25px; box-shadow: 0 0 30px #ffd70044; background: #111; }
-        h1 { color: #ffd700; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 5px; font-size: 2rem; }
-        .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 25px; font-weight: bold; letter-spacing: 1px; }
-        .egg-glow { width: 180px; filter: drop-shadow(0 0 20px #ffd700); animation: pulse 1.5s infinite alternate; margin-bottom: 20px; border-radius: 20px; }
-        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.04); } }
-        input { width: 90%; padding: 15px; margin: 12px 0; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 1rem; outline: none; }
-        button { background: #ffd700; color: #000; border: none; padding: 18px 40px; font-weight: 900; cursor: pointer; border-radius: 50px; font-size: 1.2rem; transition: 0.3s; margin-top: 10px; width: 95%; text-transform: uppercase; }
-        button:hover { background: #fff; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255, 215, 0, 0.5); }
+        .container { max-width: 450px; margin: auto; border: 2px solid #ffd700; padding: 25px; border-radius: 25px; box-shadow: 0 0 30px #ffd70044; background: #111; overflow: hidden; }
+        h1 { color: #ffd700; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 5px; font-size: 1.8rem; }
+        .subtitle { color: #888; font-size: 0.8rem; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; }
         
-        /* Leaderboard Styles */
-        .leaderboard { margin-top: 40px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
-        .leaderboard h2 { color: #ffd700; font-size: 1.2rem; text-align: center; margin-top: 0; text-transform: uppercase; }
-        .entry { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        /* Das Bild ist jetzt kleiner und wird nicht abgeschnitten */
+        .egg-glow { 
+            width: 150px; 
+            height: auto; 
+            max-height: 180px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 15px #ffd700); 
+            animation: pulse 1.5s infinite alternate; 
+            margin-bottom: 20px; 
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+        
+        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 0.9rem; outline: none; }
+        input:focus { border-color: #ffd700; }
+        
+        button { background: #ffd700; color: #000; border: none; padding: 15px; font-weight: 900; cursor: pointer; border-radius: 50px; font-size: 1.1rem; transition: 0.3s; margin-top: 15px; width: 95%; text-transform: uppercase; }
+        button:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4); }
+        
+        .leaderboard { margin-top: 30px; text-align: left; background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; }
+        .leaderboard h2 { color: #ffd700; font-size: 1rem; text-align: center; margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .entry { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; font-size: 0.85rem; }
         .entry:last-child { border-bottom: none; }
-        .rank { color: #ffd700; font-weight: bold; margin-right: 10px; }
+        .rank { color: #ffd700; font-weight: bold; margin-right: 8px; }
         .points { color: #ffd700; font-weight: bold; }
-        #status { margin-top: 20px; font-weight: bold; }
+        #status { margin-top: 15px; font-size: 0.9rem; font-weight: bold; min-height: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>$PONG GOLD EGGS</h1>
-    <div class="subtitle">REGISTER & CHECK RANKINGS</div>
+    <div class="subtitle">REGISTER & RANK UP</div>
     
     <img src="https://i.ibb.co/5hCqrV0C/pimp-egg.png" alt="Pimp Egg" class="egg-glow">
 
     <div id="form-area">
-        <input type="text" id="twitterHandle" placeholder="Enter X Username (e.g. @elonmusk)">
-        <input type="text" id="walletAddress" placeholder="Enter Solana Wallet Address">
+        <input type="text" id="twitterHandle" placeholder="X Username (e.g. @elonmusk)">
+        <input type="text" id="walletAddress" placeholder="Solana Wallet Address">
         <button onclick="registerUser()">PIMP MY ACCOUNT</button>
     </div>
 
     <div id="status"></div>
 
     <div class="leaderboard">
-        <h2>Top 10 Gold Egg Holders</h2>
-        <div id="leaderboard-list">Loading rankings...</div>
+        <h2>Top 10 Pimps</h2>
+        <div id="leaderboard-list">Loading...</div>
     </div>
 </div>
 
 <script>
+    // Dein neuer korrekter API Key und URL
     const SUPABASE_URL = 'https://advzccqwmbukvwdpnoef.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_B8rl0VLsTmd3GnQ-8RR9tA_smSIzz7s';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA4NDkzMzIzN30.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ';
+
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Leaderboard laden beim Start
     async function fetchLeaderboard() {
         const { data, error } = await supabaseClient
             .from('gold_eggs_leaderboard')
@@ -68,7 +85,7 @@
         }
 
         if (data.length === 0) {
-            listDiv.innerText = "No one registered yet. Be the first!";
+            listDiv.innerText = "No one registered yet.";
             return;
         }
 
@@ -97,12 +114,11 @@
         if (error) {
             statusDiv.innerHTML = "<span style='color:#ff4444'>❌ Already registered!</span>";
         } else {
-            statusDiv.innerHTML = "<span style='color:#00ff00'>✅ Registered! Welcome to the flock.</span>";
-            fetchLeaderboard(); // Liste aktualisieren
+            statusDiv.innerHTML = "<span style='color:#00ff00'>✅ Success! Welcome.</span>";
+            fetchLeaderboard();
         }
     }
 
-    // Initialer Aufruf
     fetchLeaderboard();
 </script>
 
