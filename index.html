@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PimpPong | Gold Egg Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #0d0d0d; color: #fff; font-family: 'Courier New', Courier, monospace; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: auto; border: 2px solid #ffd700; padding: 20px; border-radius: 20px; box-shadow: 0 0 20px #ffd70066; }
+        h1 { color: #ffd700; text-transform: uppercase; letter-spacing: 3px; }
+        .egg-glow { width: 200px; filter: drop-shadow(0 0 15px #ffd700); animation: pulse 1.5s infinite alternate; margin-bottom: 20px; }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+        input { width: 80%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; background: #222; color: #fff; border: 1px solid #444; }
+        button { background: #ffd700; color: #000; border: none; padding: 15px 30px; font-weight: bold; cursor: pointer; border-radius: 50px; font-size: 1.1rem; transition: 0.3s; }
+        button:hover { background: #fff; transform: translateY(-3px); }
+        #status { margin-top: 20px; font-size: 0.9rem; color: #ffd700; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>$PONG GOLD EGGS</h1>
+    
+    <img src="https://via.placeholder.com/200x250/ffd700/000000?text=GOLD+EGG" alt="Pimp Egg" class="egg-glow">
+
+    <p>Registriere dich für den Raid-Airdrop!</p>
+    
+    <input type="text" id="twitterHandle" placeholder="@DeinXName" required>
+    <input type="text" id="walletAddress" placeholder="Deine Solana Wallet" required>
+    
+    <br>
+    <button onclick="registerUser()">PIMP MY ACCOUNT</button>
+
+    <div id="status"></div>
+</div>
+
+<script>
+    // 1. DIESE DATEN MUSST DU ERSETZEN (findest du in Supabase unter Settings -> API)
+    const SUPABASE_URL = 'DEINE_SUPABASE_URL_HIER';
+    const SUPABASE_ANON_KEY = 'DEIN_SUPABASE_ANON_KEY_HIER';
+
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function registerUser() {
+        const twitter = document.getElementById('twitterHandle').value;
+        const wallet = document.getElementById('walletAddress').value;
+        const statusDiv = document.getElementById('status');
+
+        if (!twitter || !wallet) {
+            statusDiv.innerText = "❌ Bitte fülle beide Felder aus!";
+            return;
+        }
+
+        statusDiv.innerText = "⏳ Verbindung zum Tresor wird hergestellt...";
+
+        // Daten in die Supabase-Tabelle 'gold_eggs_leaderboard' schreiben
+        const { data, error } = await supabase
+            .from('gold_eggs_leaderboard')
+            .insert([{ twitter_name: twitter, wallet_address: wallet, points: 0 }]);
+
+        if (error) {
+            console.error(error);
+            statusDiv.innerText = "❌ Fehler: Wallet oder X-Name bereits registriert!";
+        } else {
+            statusDiv.innerText = "✅ Erfolg! Du bist im System. Jetzt raiden und Gold Eggs sammeln!";
+        }
+    }
+</script>
+
+</body>
+</html>
