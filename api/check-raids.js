@@ -1,43 +1,48 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  // Wir erlauben nur POST Anfragen (Sicherheit)
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: "Nur POST erlaubt" });
 
   const { tweetLink, twitterName } = req.body;
+  
+  // Verbindung zu deiner Supabase (Vercel nutzt deine Env-Variablen)
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    // 1. Link-Check
-    if (!tweetLink || (!tweetLink.includes("x.com") && !tweetLink.includes("twitter.com"))) {
-      return res.status(400).json({ error: "Please provide a valid X (Twitter) link." });
-    }
-
-    // 2. OEmbed Check (Kostenlose X-Abfrage)
-    const xResponse = await fetch(`https://publish.twitter.com/oembed?url=${tweetLink}`);
+    // 1. Die ID aus dem Link ziehen (alles nach 'status/')
+    const tweetId = tweetLink.split('status/')[1]?.split('?')[0]?.split('/')[0];
     
-    if (!xResponse.ok) {
-      return res.status(400).json({ error: "Could not verify this Tweet. Is it private?" });
+    if (!tweetId) {
+      return res.status(400).json({ error: "Ungültiger Link! Bitte kopiere den direkten Link zum Tweet/Retweet." });
     }
 
-    const xData = await xResponse.json();
+    // 2. In der Tabelle 'used_ids' prüfen, ob diese ID schon existiert
+    const { data: alreadyUsed, error: checkError } = await supabase
+      .from('used_ids')
+      .select('id_nummer')
+      .eq('id_nummer', tweetId)
+      .single();
 
-    // 3. Namens-Check: Gehört der Tweet dem User? 
-    const cleanName = twitterName.replace('@', '').toLowerCase();
-    if (!xData.author_url.toLowerCase().includes(cleanName)) {
-      return res.status(400).json({ error: "This Tweet doesn't match your X name!" });
+    if (alreadyUsed) {
+      return res.status(400).json({ error: "Dieser Raid-Link wurde bereits eingelöst!" });
     }
 
-    // 4. Datenbank: Punkt vergeben
-    const { error } = await supabase.rpc('claim_raid_point', { target_username: twitterName });
+    // 3. ID als 'benutzt' markieren (in used_ids speichern)
+    const { error: insertError } = await supabase
+      .from('used_ids')
+      .insert([{ id_nummer: tweetId, claimed_by: twitterName }]);
+
+    if (insertError) throw insertError;
+
+    // 4. Dem User den Punkt geben
+    const { error: updateError } = await supabase.rpc('claim_raid_point', { target_username: twitterName });
     
-    if (error) throw error;
+    if (updateError) throw updateError;
 
-    return res.status(200).json({ success: true, message: "Vibe Check passed! Egg added." });
+    return res.status(200).json({ success: true, message: "Gold Egg erfolgreich gutgeschrieben!" });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error("Fehler:", err);
+    return res.status(500).json({ error: "Datenbank-Fehler: " + err.message });
   }
 }
