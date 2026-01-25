@@ -1,126 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PimpPong | Gold Egg Dashboard</title>
+    <title>Pimp Pong | Gold Egg Leaderboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #0d0d0d; color: #fff; font-family: 'Courier New', Courier, monospace; text-align: center; margin: 0; padding: 20px; }
-        .container { max-width: 450px; margin: auto; border: 2px solid #ffd700; padding: 25px; border-radius: 25px; box-shadow: 0 0 30px #ffd70044; background: #111; overflow: hidden; }
-        h1 { color: #ffd700; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 5px; font-size: 1.8rem; }
-        .subtitle { color: #888; font-size: 0.8rem; margin-bottom: 20px; font-weight: bold; letter-spacing: 1px; }
-        
-        /* Das Bild ist jetzt kleiner und wird nicht abgeschnitten */
-        .egg-glow { 
-            width: 150px; 
-            height: auto; 
-            max-height: 180px;
-            object-fit: contain;
-            filter: drop-shadow(0 0 15px #ffd700); 
-            animation: pulse 1.5s infinite alternate; 
-            margin-bottom: 20px; 
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
-        
-        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 0.9rem; outline: none; }
-        input:focus { border-color: #ffd700; }
-        
-        button { background: #ffd700; color: #000; border: none; padding: 15px; font-weight: 900; cursor: pointer; border-radius: 50px; font-size: 1.1rem; transition: 0.3s; margin-top: 15px; width: 95%; text-transform: uppercase; }
-        button:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4); }
-        
-        .leaderboard { margin-top: 30px; text-align: left; background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #333; }
-        .leaderboard h2 { color: #ffd700; font-size: 1rem; text-align: center; margin-top: 0; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .entry { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; font-size: 0.85rem; }
-        .entry:last-child { border-bottom: none; }
-        .rank { color: #ffd700; font-weight: bold; margin-right: 8px; }
-        .points { color: #ffd700; font-weight: bold; }
-        #status { margin-top: 15px; font-size: 0.9rem; font-weight: bold; min-height: 20px; }
+        body { font-family: 'Arial', sans-serif; background-color: #0b0b0b; color: white; text-align: center; padding: 20px; }
+        .container { max-width: 500px; margin: auto; background: #1a1a1a; padding: 25px; border-radius: 20px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); border: 1px solid #333; }
+        h1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; }
+        button { width: 95%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-reg { background: #ffd700; color: black; margin-bottom: 20px; }
+        .btn-raid { background: #1da1f2; color: white; }
+        .btn-raid:disabled { background: #555; cursor: not-allowed; }
+        #leaderboard { margin-top: 30px; text-align: left; }
+        .entry { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
+        .gold { color: #ffd700; font-weight: bold; }
+        .raid-box { border-top: 2px solid #333; margin-top: 20px; padding-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>$PONG GOLD EGGS</h1>
-    <div class="subtitle">REGISTER & RANK UP</div>
-    
-    <img src="https://i.ibb.co/5hCqrV0C/pimp-egg.png" alt="Pimp Egg" class="egg-glow">
+    <h1>PIMP PONG 🏓</h1>
+    <p>Join the movement & collect Gold Eggs!</p>
 
-    <div id="form-area">
-        <input type="text" id="twitterHandle" placeholder="X Username (e.g. @elonmusk)">
-        <input type="text" id="walletAddress" placeholder="Solana Wallet Address">
-        <button onclick="registerUser()">PIMP MY ACCOUNT</button>
+    <input type="text" id="twitterHandle" placeholder="Your X Username (e.g. @PimpPong)">
+    <button class="btn-reg" onclick="registerUser()">JOIN LEADERBOARD</button>
+
+    <div class="raid-box">
+        <h3 style="color: #ffd700;">🥚 LIVE RAID</h3>
+        <p style="font-size: 0.8em; color: #aaa;">Paste your Retweet-Link here to claim an Egg:</p>
+        <input type="text" id="tweetLink" placeholder="https://x.com/.../status/...">
+        <button class="btn-raid" id="raidBtn" onclick="submitRaid()">VERIFY & CLAIM EGG</button>
     </div>
 
-    <div id="status"></div>
-
-    <div class="leaderboard">
-        <h2>Top 10 Pimps</h2>
-        <div id="leaderboard-list">Loading...</div>
+    <div id="leaderboard">
+        <h3>Leaderboard</h3>
+        <div id="list">Lade Pimps...</div>
     </div>
 </div>
 
 <script>
-    // Dein neuer korrekter API Key und URL
-    const SUPABASE_URL = 'https://advzccqwmbukvwdpnoef.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA4NDkzMzIzN30.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ';
-
+    // DEINE EINGEFÜGTEN SUPABASE DATEN
+    const SUPABASE_URL = "https://pbbmoxvpsclmscasgmvt.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBiYm1veHZwc2NsbXNjYXNnbXZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc4MjI2MjYsImV4cCI6MjA1MzM5ODYyNn0.V9zG_fP7F1vU9S6q_oU9n-kX_vW_fP7F1vU9S6q_oU9n";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    async function registerUser() {
+        const handle = document.getElementById('twitterHandle').value.trim();
+        if (!handle) return alert("Enter X Name!");
+        const { error } = await supabaseClient.from('gold_eggs_leaderboard').insert([{ twitter_name: handle, points: 0 }]);
+        if (error) alert("You are already on the leaderboard!");
+        else { alert("Welcome to the family!"); fetchLeaderboard(); }
+    }
+
+    async function submitRaid() {
+        const twitterName = document.getElementById('twitterHandle').value.trim();
+        const tweetLink = document.getElementById('tweetLink').value.trim();
+        const btn = document.getElementById('raidBtn');
+        if (!twitterName || !tweetLink) return alert("Enter X Name AND Tweet Link!");
+        
+        btn.innerText = "Checking Vibe...";
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/check-raids', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ twitterName, tweetLink })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert("✅ Vibe Check passed! Gold Egg added.");
+                document.getElementById('tweetLink').value = "";
+                fetchLeaderboard();
+            } else { alert("❌ " + result.error); }
+        } catch (err) { alert("System Error."); }
+        finally { btn.innerText = "VERIFY & CLAIM EGG"; btn.disabled = false; }
+    }
+
     async function fetchLeaderboard() {
-        const { data, error } = await supabaseClient
-            .from('gold_eggs_leaderboard')
-            .select('twitter_name, points')
-            .order('points', { ascending: false })
-            .limit(10);
-
-        const listDiv = document.getElementById('leaderboard-list');
-        if (error) {
-            listDiv.innerText = "Error loading rankings.";
-            return;
-        }
-
-        if (data.length === 0) {
-            listDiv.innerText = "No one registered yet.";
-            return;
-        }
-
-        listDiv.innerHTML = data.map((user, index) => `
+        const { data, error } = await supabaseClient.from('gold_eggs_leaderboard').select('*').order('points', { ascending: false });
+        if (error) return;
+        document.getElementById('list').innerHTML = data.map((user, index) => `
             <div class="entry">
-                <span><span class="rank">#${index + 1}</span> ${user.twitter_name}</span>
-                <span class="points">${user.points} EGGS</span>
+                <span>${index + 1}. ${user.twitter_name}</span>
+                <span class="gold">${user.points} 🥚</span>
             </div>
         `).join('');
     }
-
-    async function registerUser() {
-        const twitter = document.getElementById('twitterHandle').value.trim();
-        const wallet = document.getElementById('walletAddress').value.trim();
-        const statusDiv = document.getElementById('status');
-
-        if (!twitter || !wallet) {
-            statusDiv.innerHTML = "<span style='color:#ff4444'>❌ Fill in all fields!</span>";
-            return;
-        }
-
-        const { error } = await supabaseClient
-            .from('gold_eggs_leaderboard')
-            .insert([{ twitter_name: twitter, wallet_address: wallet, points: 0 }]);
-
-        if (error) {
-            statusDiv.innerHTML = "<span style='color:#ff4444'>❌ Already registered!</span>";
-        } else {
-            statusDiv.innerHTML = "<span style='color:#00ff00'>✅ Success! Welcome.</span>";
-            fetchLeaderboard();
-        }
-    }
-
     fetchLeaderboard();
 </script>
-
 </body>
 </html>
