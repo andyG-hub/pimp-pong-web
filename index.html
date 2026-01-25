@@ -10,41 +10,75 @@
         .container { max-width: 500px; margin: auto; border: 2px solid #ffd700; padding: 30px; border-radius: 25px; box-shadow: 0 0 30px #ffd70044; background: #111; }
         h1 { color: #ffd700; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 5px; font-size: 2rem; }
         .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 25px; font-weight: bold; letter-spacing: 1px; }
-        .egg-glow { width: 220px; filter: drop-shadow(0 0 20px #ffd700); animation: pulse 1.5s infinite alternate; margin-bottom: 25px; border-radius: 20px; }
+        .egg-glow { width: 180px; filter: drop-shadow(0 0 20px #ffd700); animation: pulse 1.5s infinite alternate; margin-bottom: 20px; border-radius: 20px; }
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.04); } }
-        input { width: 90%; padding: 15px; margin: 12px 0; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 1rem; outline: none; transition: 0.3s; }
-        input:focus { border-color: #ffd700; box-shadow: 0 0 10px #ffd70033; }
-        button { background: #ffd700; color: #000; border: none; padding: 18px 40px; font-weight: 900; cursor: pointer; border-radius: 50px; font-size: 1.2rem; transition: 0.3s; margin-top: 20px; width: 95%; text-transform: uppercase; }
+        input { width: 90%; padding: 15px; margin: 12px 0; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 1rem; outline: none; }
+        button { background: #ffd700; color: #000; border: none; padding: 18px 40px; font-weight: 900; cursor: pointer; border-radius: 50px; font-size: 1.2rem; transition: 0.3s; margin-top: 10px; width: 95%; text-transform: uppercase; }
         button:hover { background: #fff; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255, 215, 0, 0.5); }
-        #status { margin-top: 25px; font-size: 1rem; min-height: 24px; font-weight: bold; letter-spacing: 0.5px; }
-        .footer-note { margin-top: 35px; font-size: 0.75rem; color: #444; text-transform: uppercase; }
+        
+        /* Leaderboard Styles */
+        .leaderboard { margin-top: 40px; text-align: left; background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        .leaderboard h2 { color: #ffd700; font-size: 1.2rem; text-align: center; margin-top: 0; text-transform: uppercase; }
+        .entry { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        .entry:last-child { border-bottom: none; }
+        .rank { color: #ffd700; font-weight: bold; margin-right: 10px; }
+        .points { color: #ffd700; font-weight: bold; }
+        #status { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>$PONG GOLD EGGS</h1>
-    <div class="subtitle">REGISTER FOR THE NEXT RAID</div>
+    <div class="subtitle">REGISTER & CHECK RANKINGS</div>
     
     <img src="https://i.ibb.co/5hCqrV0C/pimp-egg.png" alt="Pimp Egg" class="egg-glow">
 
     <div id="form-area">
-        <input type="text" id="twitterHandle" placeholder="Enter X Username (e.g. @elonmusk)" required>
-        <input type="text" id="walletAddress" placeholder="Enter Solana Wallet Address" required>
-        <br>
+        <input type="text" id="twitterHandle" placeholder="Enter X Username (e.g. @elonmusk)">
+        <input type="text" id="walletAddress" placeholder="Enter Solana Wallet Address">
         <button onclick="registerUser()">PIMP MY ACCOUNT</button>
     </div>
 
     <div id="status"></div>
-    <div class="footer-note">Connect your socials for automatic airdrop eligibility.</div>
+
+    <div class="leaderboard">
+        <h2>Top 10 Gold Egg Holders</h2>
+        <div id="leaderboard-list">Loading rankings...</div>
+    </div>
 </div>
 
 <script>
-    // Supabase Configuration
     const SUPABASE_URL = 'https://advzccqwmbukvwdpnoef.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_B8rl0VLsTmd3GnQ-8RR9tA_smSIzz7s';
-
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Leaderboard laden beim Start
+    async function fetchLeaderboard() {
+        const { data, error } = await supabaseClient
+            .from('gold_eggs_leaderboard')
+            .select('twitter_name, points')
+            .order('points', { ascending: false })
+            .limit(10);
+
+        const listDiv = document.getElementById('leaderboard-list');
+        if (error) {
+            listDiv.innerText = "Error loading rankings.";
+            return;
+        }
+
+        if (data.length === 0) {
+            listDiv.innerText = "No one registered yet. Be the first!";
+            return;
+        }
+
+        listDiv.innerHTML = data.map((user, index) => `
+            <div class="entry">
+                <span><span class="rank">#${index + 1}</span> ${user.twitter_name}</span>
+                <span class="points">${user.points} EGGS</span>
+            </div>
+        `).join('');
+    }
 
     async function registerUser() {
         const twitter = document.getElementById('twitterHandle').value.trim();
@@ -52,37 +86,24 @@
         const statusDiv = document.getElementById('status');
 
         if (!twitter || !wallet) {
-            statusDiv.style.color = "#ff4444";
-            statusDiv.innerText = "❌ Error: Please fill in all fields!";
+            statusDiv.innerHTML = "<span style='color:#ff4444'>❌ Fill in all fields!</span>";
             return;
         }
 
-        statusDiv.style.color = "#ffd700";
-        statusDiv.innerText = "⏳ Connecting to Vault...";
-
-        // Insert into Supabase table
-        const { data, error } = await supabaseClient
+        const { error } = await supabaseClient
             .from('gold_eggs_leaderboard')
-            .insert([{ 
-                twitter_name: twitter, 
-                wallet_address: wallet, 
-                points: 0 
-            }]);
+            .insert([{ twitter_name: twitter, wallet_address: wallet, points: 0 }]);
 
         if (error) {
-            console.error("Supabase Error:", error);
-            statusDiv.style.color = "#ff4444";
-            if (error.code === "23505") {
-                statusDiv.innerText = "❌ Error: Wallet or X-Account already registered!";
-            } else {
-                statusDiv.innerText = "❌ Error: " + error.message;
-            }
+            statusDiv.innerHTML = "<span style='color:#ff4444'>❌ Already registered!</span>";
         } else {
-            statusDiv.style.color = "#00ff00";
-            statusDiv.innerText = "✅ Success! You're in the system.";
-            document.getElementById('form-area').innerHTML = "<h3 style='color:#ffd700'>YOU ARE REGISTERED! 🥚</h3><p>Raid on X to earn Gold Eggs.</p>";
+            statusDiv.innerHTML = "<span style='color:#00ff00'>✅ Registered! Welcome to the flock.</span>";
+            fetchLeaderboard(); // Liste aktualisieren
         }
     }
+
+    // Initialer Aufruf
+    fetchLeaderboard();
 </script>
 
 </body>
