@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,11 +27,11 @@
 <body>
 
 <div class="container">
-    <h1>PIMP PONG🏓</h1>
+    <h1>PIMP PONG ⭐</h1>
     <p class="subtitle">Join the movement & collect Gold Eggs!</p>
 
     <input type="text" id="twitterHandle" placeholder="Your X Name (e.g. @PimpPong)">
-    <input type="text" id="walletAddress" placeholder="Your Wallet Address (SOL/ETH)">
+    <input type="text" id="walletAddress" placeholder="Your Solana Wallet Address">
     <button class="btn-reg" onclick="registerUser()">JOIN LEADERBOARD</button>
 
     <div class="raid-box">
@@ -48,19 +48,16 @@
 </div>
 
 <script>
-    // CONFIGURATION
     const SUPABASE_URL = "https://advzccqwmbukvwdpnoef.supabase.co"; 
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA1MzM5ODYyNn0.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ"; 
     
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Helper to shorten wallet address
     function shortenAddress(address) {
         if (!address) return "No Wallet";
         return address.slice(0, 4) + "..." + address.slice(-4);
     }
 
-    // Fetch Leaderboard
     async function fetchLeaderboard() {
         const { data, error } = await supabaseClient
             .from('gold_eggs_leaderboard')
@@ -68,7 +65,7 @@
             .order('points', { ascending: false });
 
         if (error) {
-            document.getElementById('list').innerHTML = "<small style='color:red'>Error: Update SQL database columns!</small>";
+            document.getElementById('list').innerHTML = "<small style='color:red'>Database Sync Error. Please refresh site.</small>";
             return;
         }
 
@@ -88,12 +85,11 @@
         `).join('');
     }
 
-    // Register User with Wallet
     async function registerUser() {
         const handle = document.getElementById('twitterHandle').value.trim();
         const wallet = document.getElementById('walletAddress').value.trim();
 
-        if (!handle || !wallet) return alert("Please enter both X Name and Wallet Address!");
+        if (!handle || !wallet) return alert("Please enter both X Name and Solana Wallet!");
         
         const { error } = await supabaseClient
             .from('gold_eggs_leaderboard')
@@ -104,20 +100,20 @@
             }]);
 
         if (error) {
-            alert("Already registered or database error.");
+            alert("Already registered or Connection Error.");
+            console.error(error);
         } else {
-            alert("Welcome to the family!");
+            alert("Welcome to the Pimp Pong Family!");
             fetchLeaderboard();
         }
     }
 
-    // Submit Raid
     async function submitRaid() {
         const twitterName = document.getElementById('twitterHandle').value.trim();
         const tweetLink = document.getElementById('tweetLink').value.trim();
         const btn = document.getElementById('raidBtn');
 
-        if (!twitterName || !tweetLink) return alert("Enter Name and Tweet Link!");
+        if (!twitterName || !tweetLink) return alert("Name and Link required!");
         
         btn.innerText = "Checking...";
         btn.disabled = true;
@@ -131,14 +127,14 @@
             const result = await response.json();
             
             if (result.success) {
-                alert("✅ Gold Egg claimed!");
+                alert("✅ Gold Egg secured!");
                 document.getElementById('tweetLink').value = "";
                 fetchLeaderboard();
             } else {
                 alert("❌ " + (result.error || "Error"));
             }
         } catch (err) {
-            alert("Connection failed.");
+            alert("System error. Try again.");
         } finally {
             btn.innerText = "VERIFY & CLAIM EGG";
             btn.disabled = false;
@@ -147,5 +143,5 @@
 
     document.addEventListener('DOMContentLoaded', fetchLeaderboard);
 </script>
-</body>  
+</body>
 </html>
