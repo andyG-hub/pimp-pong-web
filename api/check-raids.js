@@ -1,48 +1,41 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: "Nur POST erlaubt" });
+module.exports = async (req, res) => {
+  if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
 
   const { tweetLink, twitterName } = req.body;
   
-  // Verbindung zu deiner Supabase (Vercel nutzt deine Env-Variablen)
+  // Nutzt deine in Vercel hinterlegten Environment Variables
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
   try {
-    // 1. Die ID aus dem Link ziehen (alles nach 'status/')
+    // ID aus dem Link ziehen
     const tweetId = tweetLink.split('status/')[1]?.split('?')[0]?.split('/')[0];
-    
-    if (!tweetId) {
-      return res.status(400).json({ error: "Ungültiger Link! Bitte kopiere den direkten Link zum Tweet/Retweet." });
-    }
+    if (!tweetId) return res.status(400).json({ error: "Link ungültig!" });
 
-    // 2. In der Tabelle 'used_ids' prüfen, ob diese ID schon existiert
-    const { data: alreadyUsed, error: checkError } = await supabase
+    // 1. Prüfen, ob ID schon benutzt wurde
+    const { data: alreadyUsed } = await supabase
       .from('used_ids')
       .select('id_nummer')
       .eq('id_nummer', tweetId)
       .single();
 
-    if (alreadyUsed) {
-      return res.status(400).json({ error: "Dieser Raid-Link wurde bereits eingelöst!" });
-    }
+    if (alreadyUsed) return res.status(400).json({ error: "Dieser Link wurde schon eingelöst!" });
 
-    // 3. ID als 'benutzt' markieren (in used_ids speichern)
+    // 2. ID speichern
     const { error: insertError } = await supabase
       .from('used_ids')
       .insert([{ id_nummer: tweetId, claimed_by: twitterName }]);
 
     if (insertError) throw insertError;
 
-    // 4. Dem User den Punkt geben
+    // 3. Punkt geben
     const { error: updateError } = await supabase.rpc('claim_raid_point', { target_username: twitterName });
-    
     if (updateError) throw updateError;
 
-    return res.status(200).json({ success: true, message: "Gold Egg erfolgreich gutgeschrieben!" });
+    return res.status(200).json({ success: true });
 
   } catch (err) {
-    console.error("Fehler:", err);
-    return res.status(500).json({ error: "Datenbank-Fehler: " + err.message });
+    return res.status(500).json({ error: err.message });
   }
-}
+};
