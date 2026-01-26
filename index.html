@@ -14,15 +14,12 @@
         button { width: 95%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 5px; font-size: 1em; text-transform: uppercase; }
         .btn-reg { background: #ffd700; color: black; }
         .btn-raid { background: #1da1f2; color: white; }
-        .btn-raid:disabled { background: #444; cursor: not-allowed; }
         #leaderboard { margin-top: 30px; text-align: left; background: #222; padding: 15px; border-radius: 12px; border: 1px solid #333; }
         .entry { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
-        .entry:last-child { border-bottom: none; }
         .pimp-info { display: flex; flex-direction: column; }
         .wallet-sub { font-size: 0.7em; color: #777; font-family: monospace; }
         .gold { color: #ffd700; font-weight: bold; font-size: 1.1em; }
         .raid-box { border-top: 1px solid #333; margin-top: 25px; padding-top: 20px; }
-        .error-text { color: #ff4444; font-size: 0.9em; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
@@ -44,13 +41,14 @@
 
     <div id="leaderboard">
         <h3 style="margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">Leaderboard</h3>
-        <div id="list">Loading Pimps...</div>
+        <div id="list">Checking connection...</div>
     </div>
 </div>
 
 <script>
     const SUPABASE_URL = "https://advzccqwmbukvwdpnoef.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA1MzM5ODYyNn0.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ"; 
+    // New Key added below:
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3mJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA4NDkzMzIzN30.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ"; 
     
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -58,12 +56,13 @@
         const { data, error } = await sb.from('gold_eggs_leaderboard').select('*').order('points', { ascending: false });
         
         if (error) {
-            document.getElementById('list').innerHTML = "<div class='error-text'>Sync Error: Run the SQL script in Supabase!</div>";
+            console.error("Connection error:", error);
+            document.getElementById('list').innerHTML = `<div style="color:red">Connection Error: ${error.message}</div>`;
             return;
         }
 
         if (!data || data.length === 0) {
-            document.getElementById('list').innerHTML = "<div style='text-align:center; padding: 10px; color: #666;'>No Pimps registered yet.</div>";
+            document.getElementById('list').innerHTML = "<div style='text-align:center; color: #666;'>No Pimps registered yet.</div>";
             return;
         }
 
@@ -71,7 +70,7 @@
             <div class="entry">
                 <div class="pimp-info">
                     <span>${i + 1}. ${u.twitter_name}</span>
-                    <span class="wallet-sub">${u.wallet_address ? u.wallet_address.slice(0,4) + '...' + u.wallet_address.slice(-4) : 'No Wallet'}</span>
+                    <span class="wallet-sub">${u.wallet_address.slice(0,4)}...${u.wallet_address.slice(-4)}</span>
                 </div>
                 <span class="gold">${u.points} 🥚</span>
             </div>
@@ -82,10 +81,10 @@
         const twitter_name = document.getElementById('twitterHandle').value.trim();
         const wallet_address = document.getElementById('walletAddress').value.trim();
 
-        if (!twitter_name || !wallet_address) return alert("Fill in both fields!");
+        if (!twitter_name || !wallet_address) return alert("Missing Info!");
         
         const { error } = await sb.from('gold_eggs_leaderboard').insert([{ twitter_name, wallet_address, points: 0 }]);
-        if (error) alert("Already on the list or connection error."); else fetchLeaderboard();
+        if (error) alert("Error: " + error.message); else fetchLeaderboard();
     }
 
     async function submitRaid() {
@@ -93,7 +92,7 @@
         const tweetLink = document.getElementById('tweetLink').value.trim();
         const btn = document.getElementById('raidBtn');
 
-        if (!twitterName || !tweetLink) return alert("Missing Info!");
+        if (!twitterName || !tweetLink) return alert("Fill fields!");
         btn.innerText = "Checking...";
         btn.disabled = true;
 
@@ -104,11 +103,11 @@
                 body: JSON.stringify({ twitterName, tweetLink })
             });
             const result = await response.json();
-            if (result.success) { alert("Gold Egg Secured!"); fetchLeaderboard(); } else { alert(result.error); }
-        } catch (err) { alert("System Error."); } finally { btn.innerText = "VERIFY & CLAIM EGG"; btn.disabled = false; }
+            if (result.success) { alert("Egg claimed!"); fetchLeaderboard(); } else { alert(result.error); }
+        } catch (err) { alert("System busy."); } finally { btn.innerText = "VERIFY & CLAIM EGG"; btn.disabled = false; }
     }
 
-    document.addEventListener('DOMContentLoaded', fetchLeaderboard);
+    fetchLeaderboard();
 </script>
 </body>
 </html>
