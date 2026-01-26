@@ -3,145 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pimp Pong | Gold Egg Leaderboard</title>
+    <title>Pimp Pong | Leaderboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #0b0b0b; color: white; text-align: center; padding: 20px; }
-        .container { max-width: 500px; margin: auto; background: #1a1a1a; padding: 25px; border-radius: 20px; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); border: 1px solid #333; }
-        h1 { color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); margin-bottom: 5px; }
-        .subtitle { color: #aaa; font-size: 0.9em; margin-bottom: 25px; }
-        input { width: 90%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; outline: none; }
-        button { width: 95%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 5px; }
+        body { font-family: 'Arial', sans-serif; background: #0b0b0b; color: white; text-align: center; padding: 20px; }
+        .container { max-width: 450px; margin: auto; background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        h1 { color: #ffd700; }
+        input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #222; color: white; }
+        button { width: 95%; padding: 10px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn-reg { background: #ffd700; color: black; }
         .btn-raid { background: #1da1f2; color: white; }
-        .btn-raid:disabled { background: #444; cursor: not-allowed; }
-        #leaderboard { margin-top: 30px; text-align: left; background: #222; padding: 15px; border-radius: 12px; }
-        .entry { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
-        .entry:last-child { border-bottom: none; }
-        .pimp-info { display: flex; flex-direction: column; }
-        .wallet-sub { font-size: 0.7em; color: #777; font-family: monospace; }
-        .gold { color: #ffd700; font-weight: bold; font-size: 1.1em; }
-        .raid-box { border-top: 1px solid #333; margin-top: 25px; padding-top: 20px; }
+        #leaderboard { margin-top: 30px; text-align: left; }
+        .entry { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; }
+        .wallet { font-size: 0.7em; color: #777; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>PIMP PONG 🏓</h1>
-    <p class="subtitle">Join the movement & collect Gold Eggs!</p>
-
-    <input type="text" id="twitterHandle" placeholder="Your X Name (e.g. @PimpPong)">
-    <input type="text" id="walletAddress" placeholder="Your Solana Wallet Address">
+    <h1>PIMP PONG ⭐</h1>
+    <input type="text" id="twitterHandle" placeholder="X Name (e.g. @PimpPong)">
+    <input type="text" id="walletAddress" placeholder="Solana Wallet Address">
     <button class="btn-reg" onclick="registerUser()">JOIN LEADERBOARD</button>
 
-    <div class="raid-box">
-        <h3 style="color: #ffd700; margin-bottom: 5px;">🥚 LIVE RAID</h3>
-        <p style="font-size: 0.75em; color: #888; margin-bottom: 10px;">Paste your Tweet/Retweet link to claim an egg:</p>
-        <input type="text" id="tweetLink" placeholder="https://x.com/.../status/...">
-        <button class="btn-raid" id="raidBtn" onclick="submitRaid()">VERIFY & CLAIM EGG</button>
+    <div style="margin-top:20px; border-top: 1px solid #333; padding-top:20px;">
+        <h3>🥚 RAID</h3>
+        <input type="text" id="tweetLink" placeholder="Tweet Link">
+        <button class="btn-raid" onclick="submitRaid()">CLAIM EGG</button>
     </div>
 
     <div id="leaderboard">
-        <h3 style="margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px;">Leaderboard</h3>
-        <div id="list">Loading Pimps...</div>
+        <h3>Leaderboard</h3>
+        <div id="list">Loading...</div>
     </div>
 </div>
 
 <script>
-    const SUPABASE_URL = "https://advzccqwmbukvwdpnoef.supabase.co"; 
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA1MzM5ODYyNn0.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ"; 
+    const SUPABASE_URL = "https://advzccqwmbukvwdpnoef.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkdnpjY3F3bWJ1a3Z3ZHBub2VmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkzNTcyMzcsImV4cCI6MjA1MzM5ODYyNn0.9oxdNG93FSeDkng-UXlV0G2XlauQeszW7HLadIuGvqQ";
     
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    function shortenAddress(address) {
-        if (!address) return "No Wallet";
-        return address.slice(0, 4) + "..." + address.slice(-4);
-    }
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function fetchLeaderboard() {
-        const { data, error } = await supabaseClient
-            .from('gold_eggs_leaderboard')
-            .select('*')
-            .order('points', { ascending: false });
-
-        if (error) {
-            document.getElementById('list').innerHTML = "<small style='color:red'>Database Sync Error. Please refresh site.</small>";
-            return;
+        const { data, error } = await sb.from('gold_eggs_leaderboard').select('twitter_name, wallet_address, points').order('points', { ascending: false });
+        if (error) { 
+            console.error(error);
+            document.getElementById('list').innerHTML = "Sync Error. Please check SQL."; 
+            return; 
         }
-
         if (!data || data.length === 0) {
-            document.getElementById('list').innerHTML = "<div style='text-align:center; padding: 10px; color: #666;'>No Pimps registered yet.</div>";
+            document.getElementById('list').innerHTML = "No Pimps yet.";
             return;
         }
-
-        document.getElementById('list').innerHTML = data.map((user, index) => `
+        document.getElementById('list').innerHTML = data.map(u => `
             <div class="entry">
-                <div class="pimp-info">
-                    <span>${index + 1}. ${user.twitter_name}</span>
-                    <span class="wallet-sub">${shortenAddress(user.wallet_address)}</span>
+                <div>
+                    <div>${u.twitter_name}</div>
+                    <div class="wallet">${u.wallet_address ? u.wallet_address.slice(0,4)+'...'+u.wallet_address.slice(-4) : 'No Wallet'}</div>
                 </div>
-                <span class="gold">${user.points} 🥚</span>
+                <div style="color:#ffd700">${u.points} 🥚</div>
             </div>
         `).join('');
     }
 
     async function registerUser() {
-        const handle = document.getElementById('twitterHandle').value.trim();
-        const wallet = document.getElementById('walletAddress').value.trim();
-
-        if (!handle || !wallet) return alert("Please enter both X Name and Solana Wallet!");
-        
-        const { error } = await supabaseClient
-            .from('gold_eggs_leaderboard')
-            .insert([{ 
-                twitter_name: handle, 
-                wallet_address: wallet,
-                points: 0 
-            }]);
-
-        if (error) {
-            alert("Already registered or Connection Error.");
-            console.error(error);
-        } else {
-            alert("Welcome to the Pimp Pong Family!");
-            fetchLeaderboard();
-        }
+        const twitter_name = document.getElementById('twitterHandle').value.trim();
+        const wallet_address = document.getElementById('walletAddress').value.trim();
+        if(!twitter_name || !wallet_address) return alert("Fill all fields!");
+        const { error } = await sb.from('gold_eggs_leaderboard').insert([{ twitter_name, wallet_address, points: 0 }]);
+        if (error) alert("Error: " + error.message); else fetchLeaderboard();
     }
 
     async function submitRaid() {
         const twitterName = document.getElementById('twitterHandle').value.trim();
         const tweetLink = document.getElementById('tweetLink').value.trim();
-        const btn = document.getElementById('raidBtn');
-
-        if (!twitterName || !tweetLink) return alert("Name and Link required!");
-        
-        btn.innerText = "Checking...";
-        btn.disabled = true;
-
-        try {
-            const response = await fetch('/api/check-raids', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ twitterName, tweetLink })
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                alert("✅ Gold Egg secured!");
-                document.getElementById('tweetLink').value = "";
-                fetchLeaderboard();
-            } else {
-                alert("❌ " + (result.error || "Error"));
-            }
-        } catch (err) {
-            alert("System error. Try again.");
-        } finally {
-            btn.innerText = "VERIFY & CLAIM EGG";
-            btn.disabled = false;
-        }
+        const res = await fetch('/api/check-raids', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ twitterName, tweetLink })
+        });
+        const result = await res.json();
+        if (result.success) { alert("Egg secured!"); fetchLeaderboard(); } else { alert(result.error); }
     }
 
-    document.addEventListener('DOMContentLoaded', fetchLeaderboard);
+    fetchLeaderboard();
 </script>
 </body>
 </html>
