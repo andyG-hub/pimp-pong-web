@@ -28,7 +28,7 @@
 <body>
 
 <div class="container">
-    <h1>PIMP PONG ⭐</h1>
+    <h1>PIMP PONG 🏓</h1>
     <p class="subtitle">Join the movement & collect Gold Eggs!</p>
 
     <input type="text" id="twitterHandle" placeholder="Your X Name (e.g. @PimpPong)">
@@ -58,7 +58,7 @@
         const { data, error } = await sb.from('gold_eggs_leaderboard').select('*').order('points', { ascending: false });
         
         if (error) {
-            document.getElementById('list').innerHTML = "<div class='error-text'>Sync Error: Check SQL Editor</div>";
+            document.getElementById('list').innerHTML = "<div class='error-text'>Sync Error: Run the SQL script in Supabase!</div>";
             return;
         }
 
@@ -82,16 +82,10 @@
         const twitter_name = document.getElementById('twitterHandle').value.trim();
         const wallet_address = document.getElementById('walletAddress').value.trim();
 
-        if (!twitter_name || !wallet_address) return alert("Please enter Name and Solana Wallet!");
+        if (!twitter_name || !wallet_address) return alert("Fill in both fields!");
         
         const { error } = await sb.from('gold_eggs_leaderboard').insert([{ twitter_name, wallet_address, points: 0 }]);
-
-        if (error) {
-            alert("Error: " + error.message);
-        } else {
-            alert("Welcome to the family!");
-            fetchLeaderboard();
-        }
+        if (error) alert("Already on the list or connection error."); else fetchLeaderboard();
     }
 
     async function submitRaid() {
@@ -99,8 +93,7 @@
         const tweetLink = document.getElementById('tweetLink').value.trim();
         const btn = document.getElementById('raidBtn');
 
-        if (!twitterName || !tweetLink) return alert("Name and Link required!");
-        
+        if (!twitterName || !tweetLink) return alert("Missing Info!");
         btn.innerText = "Checking...";
         btn.disabled = true;
 
@@ -111,20 +104,8 @@
                 body: JSON.stringify({ twitterName, tweetLink })
             });
             const result = await response.json();
-            
-            if (result.success) {
-                alert("✅ Gold Egg secured!");
-                document.getElementById('tweetLink').value = "";
-                fetchLeaderboard();
-            } else {
-                alert("❌ " + (result.error || "Error"));
-            }
-        } catch (err) {
-            alert("System error. Try again.");
-        } finally {
-            btn.innerText = "VERIFY & CLAIM EGG";
-            btn.disabled = false;
-        }
+            if (result.success) { alert("Gold Egg Secured!"); fetchLeaderboard(); } else { alert(result.error); }
+        } catch (err) { alert("System Error."); } finally { btn.innerText = "VERIFY & CLAIM EGG"; btn.disabled = false; }
     }
 
     document.addEventListener('DOMContentLoaded', fetchLeaderboard);
