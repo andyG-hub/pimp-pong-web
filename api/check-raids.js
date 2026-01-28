@@ -1,57 +1,62 @@
-const { createClient } = require('@supabase/supabase-js');
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "./auth/[...nextauth]";
+import { createClient } from "@supabase/supabase-js";
 
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
-  const { tweetLink, twitterName } = req.body;
-  const OFFICIAL_ACCOUNT = "PimpPong_PONG"; // Your official X handle
-  
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+export default async function handler(req, res) {
+  const session = await getServerSession(req, res, authOptions);
 
-  try {
-    // 1. SECURITY CHECK: Verify the link belongs to PimpPong_PONG
-    // This prevents users from using links from other channels
-    const isOfficialRaid = tweetLink.toLowerCase().includes(OFFICIAL_ACCOUNT.toLowerCase());
-    
-    if (!isOfficialRaid) {
-        return res.status(400).json({ 
-            error: `Invalid Raid! You must link a post from @${OFFICIAL_ACCOUNT}.` 
-        });
-    }
-
-    // ID aus dem Link ziehen
-    const tweetId = tweetLink.split('status/')[1]?.split('?')[0]?.split('/')[0];
-    if (!tweetId) return res.status(400).json({ error: "Link ungültig!" });
-
-    // 2. DUPLICATE CHECK: Prüfen, ob ID schon benutzt wurde
-    const { data: alreadyUsed } = await supabase
-      .from('used_ids')
-      .select('id_nummer')
-      .eq('id_nummer', tweetId)
-      .single();
-
-    if (alreadyUsed) return res.status(400).json({ error: "Dieser Link wurde schon eingelöst!" });
-
-    // 3. ID speichern
-    const { error: insertError } = await supabase
-      .from('used_ids')
-      .insert([{ id_nummer: tweetId, claimed_by: twitterName }]);
-
-    if (insertError) throw insertError;
-
-    // 4. Punkt geben
-    // We use the rpc call to ensure the points are added correctly in the DB
-    const { error: updateError } = await supabase.rpc('claim_raid_point', { target_username: twitterName });
-    
-    if (updateError) {
-        // If the user isn't registered yet, rpc might fail or do nothing
-        return res.status(400).json({ error: "User not found. Register for the leaderboard first!" });
-    }
-
-    return res.status(200).json({ success: true });
-
-  } catch (err) {
-    console.error("Raid Error:", err.message);
-    return res.status(500).json({ error: "Internal Server Error" });
+  if (!session) {
+    return res.status(401).json({ error: "Please log in with X first!" });
   }
-};
+
+  const { tweetLink, walletAddress } = req.body;
+  const userHandle = session.user.username.toLowerCase(); // Their real X handle
+
+  // 1. REGEX to extract handle and tweet ID from the link
+  // Matches x.com or twitter.com
+  const tweetRegex = /(?:https?:\/\/)?(?:www\.)?(?:twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/;
+  const match = tweetLink.match(tweetRegex);
+
+  if (!match) {
+    return res.status(400).json({ error: "Invalid X link format!" });
+  }
+
+  const handleInLink = match[1].toLowerCase();
+  const tweetId = match[2];
+
+  // 2. SECURITY CHECK: Is it their own link?
+  if (handleInLink === "pimppong_pong") {
+    return res.status(400).json({ error: "You cannot use the official post link! Quote tweet it and paste YOUR link." });
+  }
+
+  if (handleInLink !== userHandle) {
+    return res.status(400).json({ error: `This link belongs to @${handleInLink}, but you are logged in as @${userHandle}.` });
+  }
+
+  // 3. DATABASE CHECK: Has this tweet already been claimed?
+  const { data: existingRaid } = await supabase
+    .from('raids')
+    .select('id')
+    .eq('tweet_id', tweetId)
+    .single();
+
+  if (existingRaid) {
+    return res.status(400).json({ error: "This post has already been used to claim an egg!" });
+  }
+
+  // 4. SUCCESS: Give the egg and save the raid
+  const { error: insertError } = await supabase
+    .from('raids')
+    .insert([{ 
+      tweet_id: tweetId, 
+      user_handle: userHandle, 
+      wallet: walletAddress,
+      created_at: new Date() 
+    }]);
+
+  if (insertError) return res.status(500).json({ error: "Database error. Try again." });
+
+  return res.status(200).json({ message: "Egg claimed successfully! 🥚" });
+}
