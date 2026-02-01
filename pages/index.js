@@ -1,3 +1,6 @@
+export default function Home() {
+  return (
+    <div dangerouslySetInnerHTML={{ __html: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,7 +37,8 @@
         <button class="btn-raid" onclick="window.location.href='/api/auth/signin'">CONNECT X ACCOUNT</button>
     </div>
 
-    <input type="hidden" id="twitterHandle"> <input type="text" id="walletAddress" placeholder="Your Solana Wallet Address">
+    <input type="hidden" id="twitterHandle"> 
+    <input type="text" id="walletAddress" placeholder="Your Solana Wallet Address">
     <button class="btn-reg" onclick="registerUser()">JOIN LEADERBOARD</button>
 
     <div class="raid-box">
@@ -55,17 +59,16 @@
     const SUPABASE_ANON_KEY = "sb_publishable_B8rl0VLsTmd3GnQ-8RR9tA_smSIzz7s"; 
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 1. CHECK IF USER IS LOGGED IN ON LOAD
     async function checkUserSession() {
         try {
             const res = await fetch('/api/auth/session');
             const session = await res.json();
 
             if (session && session.user) {
-                document.getElementById('auth-section').innerHTML = `
-                    <p style="color: #1da1f2; font-weight: bold; margin: 0;">✅ Logged in as: @${session.user.username}</p>
+                document.getElementById('auth-section').innerHTML = \`
+                    <p style="color: #1da1f2; font-weight: bold; margin: 0;">✅ Logged in as: @\${session.user.username}</p>
                     <button onclick="window.location.href='/api/auth/signout'" style="background:none; border:none; color:gray; cursor:pointer; font-size:10px; text-decoration: underline;">(Logout)</button>
-                `;
+                \`;
                 document.getElementById('twitterHandle').value = session.user.username;
             }
         } catch (e) {
@@ -73,29 +76,27 @@
         }
     }
 
-    // 2. FETCH LEADERBOARD DATA
     async function fetchLeaderboard() {
         const { data, error } = await sb.from('gold_eggs_leaderboard').select('*').order('points', { ascending: false });
         if (error) {
-            document.getElementById('list').innerHTML = `<div style="color:red">Status: ${error.message}</div>`;
+            document.getElementById('list').innerHTML = \`<div style="color:red">Status: \${error.message}</div>\`;
             return;
         }
         if (!data || data.length === 0) {
             document.getElementById('list').innerHTML = "<div style='text-align:center; color: #666;'>Leaderboard empty.</div>";
             return;
         }
-        document.getElementById('list').innerHTML = data.map((u, i) => `
+        document.getElementById('list').innerHTML = data.map((u, i) => \`
             <div class="entry">
                 <div style="display:flex; flex-direction:column">
-                    <span>${i + 1}. ${u.twitter_name}</span>
-                    <span class="wallet-sub">${u.wallet_address.slice(0,4)}...${u.wallet_address.slice(-4)}</span>
+                    <span>\${i + 1}. \${u.twitter_name}</span>
+                    <span class="wallet-sub">\${u.wallet_address.slice(0,4)}...\${u.wallet_address.slice(-4)}</span>
                 </div>
-                <span class="gold">${u.points} 🥚</span>
+                <span class="gold">\${u.points} 🥚</span>
             </div>
-        `).join('');
+        \`).join('');
     }
 
-    // 3. REGISTER NEW USER
     async function registerUser() {
         const twitter_name = document.getElementById('twitterHandle').value.trim();
         const wallet_address = document.getElementById('walletAddress').value.trim();
@@ -104,11 +105,10 @@
         if (!wallet_address) return alert("Please enter your Solana wallet!");
 
         const { error } = await sb.from('gold_eggs_leaderboard').insert([{ twitter_name, wallet_address, points: 0 }]);
-        if (error) alert("You are already registered or there was an error: " + error.message); 
+        if (error) alert("Error: " + error.message); 
         else { alert("Registered!"); fetchLeaderboard(); }
     }
 
-    // 4. SUBMIT RAID (NEW SECURE VERSION)
     async function submitRaid() {
         const twitterName = document.getElementById('twitterHandle').value.trim();
         const tweetLink = document.getElementById('tweetLink').value.trim();
@@ -131,21 +131,23 @@
             if (response.ok) { 
                 alert("Gold Egg Claimed! 🥚"); 
                 fetchLeaderboard(); 
-                document.getElementById('tweetLink').value = ""; // Clear input
+                document.getElementById('tweetLink').value = "";
             } else { 
                 alert(result.error); 
             }
         } catch (err) { 
-            alert("System error. Make sure your Vercel project is deployed."); 
+            alert("System error. Check Vercel logs."); 
         } finally { 
             btn.innerText = "VERIFY & CLAIM EGG"; 
             btn.disabled = false; 
         }
     }
 
-    // Initialize
     checkUserSession();
     fetchLeaderboard();
 </script>
 </body>
 </html>
+    ` }} />
+  );
+}
